@@ -12,7 +12,7 @@ Future<Database> openDB() async {
         'CREATE TABLE recipes('
         'id INTEGER PRIMARY KEY AUTOINCREMENT, '
         'name TEXT,'
-        'images JSON DEFAULT "[]",'
+        'images TEXT DEFAULT "[]",'
         'description TEXT DEFAULT ""'
         ');',
       );
@@ -23,20 +23,20 @@ Future<Database> openDB() async {
 Future<void> insertRecipe(String name) async {
   final db = await openDB();
   await db.insert('recipes', {'name': name});
-  db.close();
+  // db.close();
 }
 
 Future<List<Map>> selectRecipes() async {
   final db = await openDB();
   final List<Map> recipes = await db.query('recipes');
-  db.close();
+  // db.close();
   return recipes;
 }
 
 Future<void> deleteRecipe(int id) async {
   final db = await openDB();
   await db.delete('recipes', where: 'id = ?', whereArgs: [id]);
-  db.close();
+  // db.close();
 }
 
 Future<void> updateRecipe(int id, String newName) async {
@@ -47,7 +47,7 @@ Future<void> updateRecipe(int id, String newName) async {
     where: 'id = ?',
     whereArgs: [id],
   );
-  db.close();
+  // db.close();
 }
 
 Future<void> updateImages(int id, String images) async {
@@ -58,7 +58,7 @@ Future<void> updateImages(int id, String images) async {
     where: 'id = ?',
     whereArgs: [id],
   );
-  db.close();
+  // db.close();
 }
 
 Future<void> updateDescription(int id, String description) async {
@@ -69,5 +69,5 @@ Future<void> updateDescription(int id, String description) async {
     where: 'id = ?',
     whereArgs: [id],
   );
-  db.close();
+  // db.close();
 }

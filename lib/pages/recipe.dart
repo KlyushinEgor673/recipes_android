@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:recipes_android/sqlite_query.dart';
 
@@ -28,11 +31,20 @@ class _RecipeState extends State<Recipe> {
     ImagePicker picker = ImagePicker();
     List<XFile> listImage = await picker.pickMultiImage();
     if (listImage.length > 0) {
-      for (XFile image in listImage) {
-        var bytes = await image.readAsBytes();
+      final Directory dirApp = await getApplicationDocumentsDirectory();
+      for (int i = 0; i < listImage.length; ++i) {
+        final String savePath =
+            '${dirApp.path}/${widget.recipes[widget.i]['id']}_$i.jpg';
+        final File imageFile = File(listImage[i].path);
+        await imageFile.copy(savePath);
+        var bytes = await listImage[i].readAsBytes();
         _listBytes.add(bytes);
       }
-      await _updateImageInDB();
+      // for (XFile image in listImage) {
+      //   var bytes = await image.readAsBytes();
+      //   _listBytes.add(bytes);
+      // }
+      // await _updateImageInDB();
       setState(() {
         _listBytes;
       });
@@ -44,15 +56,42 @@ class _RecipeState extends State<Recipe> {
   PageController _controllerPage = PageController(initialPage: 0);
   int _currentPage = 0;
 
+  Future<void> _init() async {
+    _controller.text = widget.recipes[widget.i]['description'];
+    final Directory dirApp = await getApplicationDocumentsDirectory();
+    final files = dirApp.listSync();
+    List _listBytesTime = [];
+    for (var file in files) {
+      if (file.path
+              .split('/')
+              .last
+              .startsWith(widget.recipes[widget.i]['id'].toString()) &&
+          file.path.split('/').last.endsWith('.jpg')) {
+        _listBytesTime.add(await File(file.path).readAsBytes());
+      }
+    }
+    setState(() {
+      _listBytes = _listBytesTime;
+    });
+    // _listBytes =
+    // await Future.wait(
+    //   files.where((file) {
+    //     final fileName = file.path;
+    //     print(fileName);
+    //     return true;
+    //   }).map((file) => File(file.path).readAsBytes()),
+    // );
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    List listBase64 = jsonDecode(widget.recipes[widget.i]['images']);
-    for (var base64 in listBase64) {
-      _listBytes.add(base64Decode(base64));
-    }
-    _controller.text = widget.recipes[widget.i]['description'];
+    // List listBase64 = jsonDecode(widget.recipes[widget.i]['images']);
+    // for (var base64 in listBase64) {
+    //   _listBytes.add(base64Decode(base64));
+    // }
+    _init();
   }
 
   @override
@@ -108,7 +147,7 @@ class _RecipeState extends State<Recipe> {
                                   aspectRatio: 3 / 4,
                                   child: Stack(
                                     children: [
-                                      Image.memory(entry.value),
+                                      Center(child: Image.memory(entry.value)),
                                       Positioned(
                                         child: Container(
                                           decoration: BoxDecoration(
@@ -186,7 +225,8 @@ class _RecipeState extends State<Recipe> {
                       ),
                     ),
                     Container(
-                      margin: EdgeInsets.only(top: 5),
+                      padding: EdgeInsets.only(top: 5, bottom: 5),
+                      color: Colors.grey.withAlpha(70),
                       child: Row(
                         children: _listBytes
                             .asMap()
@@ -198,10 +238,7 @@ class _RecipeState extends State<Recipe> {
                                     MediaQuery.of(context).size.width /
                                         _listBytes.length -
                                     5,
-                                margin: EdgeInsets.only(
-                                  right: 2.5,
-                                  left: 2.5,
-                                ),
+                                margin: EdgeInsets.only(right: 2.5, left: 2.5),
                                 decoration: BoxDecoration(
                                   color: entry.key == _currentPage
                                       ? Colors.white.withAlpha(200)
