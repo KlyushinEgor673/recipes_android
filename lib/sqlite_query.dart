@@ -11,7 +11,10 @@ Future<Database> openDB() async {
       await db.execute(
         'CREATE TABLE recipes('
         'id INTEGER PRIMARY KEY AUTOINCREMENT, '
-        'name TEXT);',
+        'name TEXT,'
+        'images JSON DEFAULT "[]",'
+        'description TEXT DEFAULT ""'
+        ');',
       );
     },
   );
@@ -26,6 +29,45 @@ Future<void> insertRecipe(String name) async {
 Future<List<Map>> selectRecipes() async {
   final db = await openDB();
   final List<Map> recipes = await db.query('recipes');
-  print(recipes);
+  db.close();
   return recipes;
+}
+
+Future<void> deleteRecipe(int id) async {
+  final db = await openDB();
+  await db.delete('recipes', where: 'id = ?', whereArgs: [id]);
+  db.close();
+}
+
+Future<void> updateRecipe(int id, String newName) async {
+  final db = await openDB();
+  await db.update(
+    'recipes',
+    {'name': newName},
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+  db.close();
+}
+
+Future<void> updateImages(int id, String images) async {
+  final db = await openDB();
+  await db.update(
+    'recipes',
+    {'images': images},
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+  db.close();
+}
+
+Future<void> updateDescription(int id, String description) async {
+  final db = await openDB();
+  await db.update(
+    'recipes',
+    {'description': description},
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+  db.close();
 }

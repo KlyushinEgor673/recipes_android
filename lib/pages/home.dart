@@ -12,6 +12,11 @@ class _HomeState extends State<Home> {
   final _controllerName = TextEditingController();
   bool _isLoading = true;
   List<Map> recipes = [];
+  int _editI = -1;
+  final _controllerEditI = TextEditingController();
+  final _controllerSearch = TextEditingController();
+  final FocusNode _focusNodeSearch = FocusNode();
+  final FocusNode _focusNodeEditI = FocusNode();
 
   Future<void> _init() async {
     recipes = await selectRecipes();
@@ -21,69 +26,283 @@ class _HomeState extends State<Home> {
     });
   }
 
+  void _handleFocusSearchSearch() {
+    if (_focusNodeSearch.hasFocus){
+      print('focus');
+      setState(() {
+        _editI = -1;
+      });
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _focusNodeSearch.addListener(_handleFocusSearchSearch);
     _init();
   }
 
   @override
   Widget build(BuildContext context) {
-    return _isLoading
-        ? Center(child: CircularProgressIndicator())
-        : Scaffold(
-            backgroundColor: Colors.white,
-            body: Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: recipes.length,
-                    itemBuilder: (BuildContext context, i) {
-                      return InkWell(
-                        child: Card(child: Text(recipes[i]['name'])),
-                        onTap: (){
-                          Navigator.pushNamed(context, '/recipe', arguments: {
-                            'recipes': recipes,
-                            'i': i
-                          });
-                        },
-                      );
-                    },
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Card(
+              color: Colors.white,
+              child: TextSelectionTheme(
+                data: TextSelectionThemeData(
+                  cursorColor: Colors.blueGrey,
+                  selectionHandleColor: Colors.blueGrey,
+                  selectionColor: Colors.blueGrey.withAlpha(127),
+                ),
+                child: TextField(
+                  style: TextStyle(fontSize: 18),
+                  controller: _controllerSearch,
+                  focusNode: _focusNodeSearch,
+                  onChanged: (value) {
+                    setState(() {
+                      _controllerSearch;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.black26, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                    ),
+                    suffixIcon: Icon(Icons.search),
                   ),
                 ),
-              ],
+              ),
             ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      content: SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.75,
-                        child: TextField(controller: _controllerName),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.only(bottom: 80),
+                itemCount: recipes.length,
+                itemBuilder: (BuildContext context, i) {
+                  return recipes[i]['name'].startsWith(_controllerSearch.text)
+                      ? _editI == i
+                            ? Card(
+                                color: Colors.white,
+                                child: Expanded(
+                                  child: TextSelectionTheme(
+                                    data: TextSelectionThemeData(),
+                                    child: TextSelectionTheme(
+                                      data: TextSelectionThemeData(
+                                        cursorColor: Colors.blueGrey,
+                                        selectionHandleColor: Colors.blueGrey,
+                                        selectionColor: Colors.blueGrey
+                                            .withAlpha(127),
+                                      ),
+                                      child: TextField(
+                                        focusNode: _focusNodeEditI,
+                                        style: TextStyle(fontSize: 18),
+                                        decoration: InputDecoration(
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: Colors.blueGrey,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: Colors.black26,
+                                              width: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        autofocus: true,
+                                        controller: _controllerEditI,
+                                        onChanged: (value) async {
+                                          await updateRecipe(
+                                            recipes[i]['id'],
+                                            _controllerEditI.text,
+                                          );
+                                        },
+                                        onEditingComplete: () async {
+                                          await updateRecipe(
+                                            recipes[i]['id'],
+                                            _controllerEditI.text,
+                                          );
+                                          recipes = await selectRecipes();
+                                          setState(() {
+                                            _editI = -1;
+                                            recipes;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Card(
+                    color: Colors.white,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            child: Text(
+                              recipes[i]['name'],
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            margin: EdgeInsets.only(left: 15),
+                          ),
+                          PopupMenuButton(
+                            color: Colors.white,
+                            itemBuilder: (BuildContext context) => [
+                              PopupMenuItem(
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit),
+                                    SizedBox(width: 10),
+                                    Text('Изменить'),
+                                  ],
+                                ),
+                                value: 'edit',
+                              ),
+                              PopupMenuItem(
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Удалить',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                value: 'delete',
+                              ),
+                            ],
+                            onSelected: (value) async {
+                              if (value == 'edit') {
+                                setState(() {
+                                  _editI = i;
+                                  _controllerEditI.text =
+                                  recipes[i]['name'];
+                                  _focusNodeSearch.unfocus();
+                                });
+                              } else {
+                                await deleteRecipe(
+                                  recipes[i]['id'],
+                                );
+                                recipes = await selectRecipes();
+                                setState(() {
+                                  recipes;
+                                });
+                              }
+                            },
+                          ),
+                        ],
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: Text('отмена'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            insertRecipe(_controllerName.text);
-                            Navigator.pop(context);
-                          },
-                          child: Text('создать'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            '/recipe',
+                            arguments: {'recipes': recipes, 'i': i},
+                          );
+                          setState(() {
+                            _editI = -1;
+                          });
+                          recipes = await selectRecipes();
+                          setState(() {
+                            recipes;
+                          });
+                        }
+                    ),
+                  ) : SizedBox.shrink();
+                },
+              ),
             ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blueGrey,
+        child: Icon(Icons.add, color: Colors.white),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                content: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: TextField(
+                    style: TextStyle(fontSize: 18),
+                    controller: _controllerName,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: 'Название',
+                      labelStyle: TextStyle(
+                        fontSize: 18,
+                        color: Colors.blueGrey,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.blueGrey,
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.black26, width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'отмена',
+                      style: TextStyle(color: Colors.blueGrey, fontSize: 14),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await insertRecipe(_controllerName.text);
+                      recipes = await selectRecipes();
+                      setState(() {
+                        recipes;
+                      });
+                      _controllerName.text = '';
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'создать',
+                      style: TextStyle(color: Colors.blueGrey, fontSize: 14),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
+        },
+      ),
+    );
   }
 }
