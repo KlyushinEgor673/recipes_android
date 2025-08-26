@@ -20,9 +20,18 @@ Future<Database> openDB() async {
   );
 }
 
-Future<void> insertRecipe(String name) async {
+Future<bool> insertRecipe(String name) async {
   final db = await openDB();
-  await db.insert('recipes', {'name': name});
+  final List<Map> recipes = await db.query(
+    'recipes',
+    where: 'name = ?',
+    whereArgs: [name],
+  );
+  if (recipes.length == 0){
+    await db.insert('recipes', {'name': name});
+    return true;
+  }
+  return false;
   // db.close();
 }
 
@@ -50,16 +59,16 @@ Future<void> updateRecipe(int id, String newName) async {
   // db.close();
 }
 
-Future<void> updateImages(int id, String images) async {
-  final db = await openDB();
-  await db.update(
-    'recipes',
-    {'images': images},
-    where: 'id = ?',
-    whereArgs: [id],
-  );
-  // db.close();
-}
+// Future<void> updateImages(int id, String images) async {
+//   final db = await openDB();
+//   await db.update(
+//     'recipes',
+//     {'images': images},
+//     where: 'id = ?',
+//     whereArgs: [id],
+//   );
+//   // db.close();
+// }
 
 Future<void> updateDescription(int id, String description) async {
   final db = await openDB();

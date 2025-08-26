@@ -18,13 +18,30 @@ class Recipe extends StatefulWidget {
 }
 
 class _RecipeState extends State<Recipe> {
-  Future<void> _updateImageInDB() async {
-    List listBase64 = [];
-    for (var bytes in _listBytes) {
-      listBase64.add(base64Encode(bytes));
+  Future<void> _updateImagesInStorage() async {
+    // List listBase64 = [];
+    // for (var bytes in _listBytes) {
+    //   listBase64.add(base64Encode(bytes));
+    // }
+    // String listBase64String = jsonEncode(listBase64);
+    // await updateImages(widget.recipes[widget.i]['id'], listBase64String);
+    final Directory dirApp = await getApplicationDocumentsDirectory();
+    final files = dirApp.listSync();
+    for (var file in files) {
+      if (file.path
+              .split('/')
+              .last
+              .startsWith(widget.recipes[widget.i]['id'].toString()) &&
+          file.path.split('/').last.endsWith('.jpg')) {
+        file.delete();
+      }
     }
-    String listBase64String = jsonEncode(listBase64);
-    await updateImages(widget.recipes[widget.i]['id'], listBase64String);
+    for (int i = 0; i < _listBytes.length; ++i) {
+      final String savePath =
+          '${dirApp.path}/${widget.recipes[widget.i]['id']}_$i.jpg';
+      File imageFile = File(savePath);
+      await imageFile.writeAsBytes(_listBytes[i]);
+    }
   }
 
   Future<void> _getImages() async {
@@ -38,13 +55,8 @@ class _RecipeState extends State<Recipe> {
         final File imageFile = File(listImage[i].path);
         await imageFile.copy(savePath);
         var bytes = await listImage[i].readAsBytes();
-        _listBytes.add(bytes);
+        _listBytes.insert(0, bytes);
       }
-      // for (XFile image in listImage) {
-      //   var bytes = await image.readAsBytes();
-      //   _listBytes.add(bytes);
-      // }
-      // await _updateImageInDB();
       setState(() {
         _listBytes;
       });
@@ -162,7 +174,7 @@ class _RecipeState extends State<Recipe> {
                                             ),
                                             onTap: () async {
                                               _listBytes.removeAt(entry.key);
-                                              await _updateImageInDB();
+                                              await _updateImagesInStorage();
                                               setState(() {
                                                 _listBytes;
                                               });
@@ -213,14 +225,14 @@ class _RecipeState extends State<Recipe> {
                           List<XFile> listImage = await picker.pickMultiImage();
                           for (XFile image in listImage) {
                             var bytes = await image.readAsBytes();
-                            _listBytes.add(bytes);
+                            _listBytes.insert(0, bytes);
                           }
                           _controllerPage.jumpToPage(0);
                           setState(() {
                             _currentPage = 0;
                             _listBytes;
                           });
-                          await _updateImageInDB();
+                          await _updateImagesInStorage();
                         },
                       ),
                     ),
