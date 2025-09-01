@@ -91,57 +91,55 @@ class _HomeState extends State<Home> {
                       ? _editI == i
                             ? Card(
                                 color: Colors.white,
-                                child: Expanded(
-                                  child: TextSelectionTheme(
-                                    data: TextSelectionThemeData(
-                                      cursorColor: Colors.blueGrey,
-                                      selectionHandleColor: Colors.blueGrey,
-                                      selectionColor: Colors.blueGrey
-                                          .withAlpha(127),
-                                    ),
-                                    child: TextField(
-                                      focusNode: _focusNodeEditI,
-                                      style: TextStyle(fontSize: 18),
-                                      decoration: InputDecoration(
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: Colors.blueGrey,
-                                            width: 2,
-                                          ),
+                                child: TextSelectionTheme(
+                                  data: TextSelectionThemeData(
+                                    cursorColor: Colors.blueGrey,
+                                    selectionHandleColor: Colors.blueGrey,
+                                    selectionColor: Colors.blueGrey
+                                        .withAlpha(127),
+                                  ),
+                                  child: TextField(
+                                    focusNode: _focusNodeEditI,
+                                    style: TextStyle(fontSize: 18),
+                                    decoration: InputDecoration(
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          12,
                                         ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: Colors.black26,
-                                            width: 1,
-                                          ),
+                                        borderSide: BorderSide(
+                                          color: Colors.blueGrey,
+                                          width: 2,
                                         ),
                                       ),
-                                      autofocus: true,
-                                      controller: _controllerEditI,
-                                      onChanged: (value) async {
-                                        await updateRecipe(
-                                          recipes[i]['id'],
-                                          _controllerEditI.text,
-                                        );
-                                      },
-                                      onEditingComplete: () async {
-                                        await updateRecipe(
-                                          recipes[i]['id'],
-                                          _controllerEditI.text,
-                                        );
-                                        recipes = await selectRecipes();
-                                        setState(() {
-                                          _editI = -1;
-                                          recipes;
-                                        });
-                                      },
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          12,
+                                        ),
+                                        borderSide: BorderSide(
+                                          color: Colors.black26,
+                                          width: 1,
+                                        ),
+                                      ),
                                     ),
+                                    autofocus: true,
+                                    controller: _controllerEditI,
+                                    onChanged: (value) async {
+                                      await updateRecipe(
+                                        recipes[i]['id'],
+                                        _controllerEditI.text,
+                                      );
+                                    },
+                                    onEditingComplete: () async {
+                                      await updateRecipe(
+                                        recipes[i]['id'],
+                                        _controllerEditI.text,
+                                      );
+                                      recipes = await selectRecipes();
+                                      setState(() {
+                                        _editI = -1;
+                                        recipes;
+                                      });
+                                    },
                                   ),
                                 ),
                               )
